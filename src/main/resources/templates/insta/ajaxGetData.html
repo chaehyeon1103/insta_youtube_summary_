@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script src="https://code.jquery.com/jquery-latest.min.js"></script>
+</head>
+<body>
+<div>
+	
+</div>
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		
+		var businessId = '';
+		var accessToken = '';
+		
+		//user 정보 가져오기
+		$.getJSON('/insta/getUser', function(data) {
+			console.log(data)
+			for(var i=0; i<data.length; i++) {
+				businessId = data[i].businessId;
+				accessToken = data[i].accessToken;
+				console.log(businessId)
+				console.log(accessToken)
+				
+				//가져온 정보로 계정의 정보 가져오기
+				$.ajax({
+		    		async: false,
+		    		type: 'get',
+		    		url: 'https://graph.facebook.com/v13.0/'+businessId+'?fields=id,biography,followers_count,follows_count,media_count,name,profile_picture_url,username,website&access_token='+accessToken,
+		    		dataType: 'json',
+		    		success: function(data) {
+		    			console.log(data);
+		    			
+		    			//사용자 계정 정보 data db에 저장
+						$.ajax({
+							async: false,
+		        			type: 'post',
+		        			url: '/insta/addUser',
+		        			data: data,
+		        			dataType: 'json',
+		        			success: function(data) {
+		        				if(data) {
+		        					alert('account 정보가 저장되었습니다.')
+		        				}
+		        			}
+						})
+		    		}
+		    	})
+		    	
+		    	//가져온 정보로 게시물 정보 가져오기
+				$.ajax({
+		    		async: false,
+		    		type: 'get',
+		    		url: 'https://graph.facebook.com/v13.0/'+businessId+'/media?fields=caption, comments_count, id, is_comment_enabled, like_count, media_product_type, media_type, media_url, owner, permalink, shortcode, thumbnail_url, timestamp, username&access_token='+accessToken,
+		    		dataType: 'json',
+		    		success: function(data) {
+		    			console.log(data);
+		    			for(var i=0; i<data['data'].length; i++) {
+		    				console.log(data['data'][i])
+		    				
+		    				//owner 값 재설정
+		    				data['data'][i].owner = data['data'][i].owner.id;
+		    				
+		    				//게시물 정보 data db에 저장
+							$.ajax({
+								async: false,
+			        			type: 'post',
+			        			url: '/insta/addMedia',
+			        			data: data['data'][i],
+			        			dataType: 'json',
+			        			success: function(data) {
+			        				if(data) {
+			        					alert('media 정보가 저장되었습니다.')
+			        				}
+			        			}
+							})
+		    			}
+		    		}
+		    	})
+		    	
+		    	
+			}
+		})
+	})
+</script>
+</body>
+</html>

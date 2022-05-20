@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script src="https://code.jquery.com/jquery-latest.min.js"></script>
+<script async defer src="https://connect.facebook.net/en_US/sdk.js"></script>
+<style>
+	ul {
+		list-style:none;
+   		padding-left:0px;
+	}
+</style>
+</head>
+<body>
+
+	<div id="welcome"></div>
+	
+	<ul>
+		<li class="token"></li>
+		<li class="longToken"></li>
+		<li class="page"></li>
+		<li class="insta"></li>
+		<!-- <li class="instaPost"></li> -->
+	</ul>
+	
+	<ul class="pageSelect"></ul>
+	
+	<ul class="idSelect"></ul>
+	
+	<input type="button" value="checking....." id="authBtn" onclick="
+	            if(this.value === 'Login') {
+	                FB.login(function(response) {
+	                    location.reload();
+	                }, {scope: 'pages_manage_ads, pages_manage_metadata, pages_read_engagement, pages_read_user_content, instagram_basic, instagram_manage_comments, instagram_manage_insights'});
+	            } else {
+	                FB.logout(function(response) {
+	                    location.reload();
+	                });
+	            }
+	        "> 
+	<button id="dataBtn">데이터 수집하기</button>
+	
+	<script type="text/javascript">
+	
+		var fbName = '';
+		var fbId = '';
+	    var accessToken = '';
+	    var pageToken = '';
+	    var pageId = '';
+	    var instaId = '';
+	    
+		$(document).ready(function() {
+			$("#dataBtn").click(function() {
+				$.ajax({
+					url: "/insta/getData",
+					success: function(e) {
+						alert("instagram 데이터 수집 성공")
+					}
+				})
+			})
+		})
+	
+	    window.fbAsyncInit = function() {
+		    FB.init({
+			    appId            : '3097126667208676',
+			    autoLogAppEvents : true,
+			    xfbml            : true,
+			    version          : 'v13.0'
+		    });
+	    
+	    	FB.getLoginStatus(function(response) {
+	    		//로그인이 되어있을 때
+	        	if(response.status === 'connected') {
+	        		
+	        		//기본 토큰 발급
+		        	accessToken = response.authResponse.accessToken;
+		        	console.log(accessToken);
+		        	$('.token').html('토큰 : ' + accessToken);
+	        	
+		        	//장기토큰 발급
+		        	$.ajax({
+		        		async: false,
+		        		type: 'get',
+		        		url: 'https://graph.facebook.com/v13.0/oauth/access_token?grant_type=fb_exchange_token&client_id=3097126667208676&client_secret=f2f286a72247baa5618ff7addf64d431&fb_exchange_token='+accessToken,
+		        		dataType: 'json',
+		        		success: function(data) {
+		        			accessToken = data['access_token']
+		        		}
+		        	})
+		        	
+		        	//장기토큰 발급완료
+		        	console.log(accessToken)
+		        	$('.longToken').html('장기토큰 : ' + accessToken);
+		        	
+		        	//사용자 facebook id, name 가져오기
+		        	$.ajax({
+		        		async: false,
+		        		type: 'get',
+		        		url: 'https://graph.facebook.com/v13.0/me?access_token='+accessToken,
+		        		dataType: 'json',
+		        		success: function(data) {
+		        			fbName = data['name'];
+		        			fbId = data['id'];
+		        		}
+		        	})
+		        	
+		        	//사용자 페이지id 가져오기
+		        	$.ajax({
+		        		async: false,
+		        		type: 'get',
+		        		url: 'https://graph.facebook.com/v13.0/me/accounts?access_token='+accessToken,
+		        		dataType: 'json',
+		        		success: function(data) {
+		        			console.log(data);
+		        			var str = '';
+		        			
+		        			for(var i=0; i<data['data'].length; i++) {
+		        				$('.page').append(' 페이지 id : ' + data['data'][i].id);
+		        				
+		        				//pageToken과 pageId를 input에 저장
+		        				str += '<li><input type="radio" name="page" value="'+data['data'][i].id+'">'+data['data'][i].name
+		        				str += '<input type="hidden" name="'+data['data'][i].id+'" value="'+data['data'][i].access_token+'"></li>'
+		        			}
+		        			str += '<input type="button" class="pageCheck" value="확인">'
+		        			
+		        			$('.pageSelect').html(str);
+		        		}
+		        	})
+		        	
+		        	//page 선택했을 때
+		        	$(".pageCheck").click(function() {
+		        		if(!$('input[name="page"]:checked').val()) {
+		        			alert('연결할 페이지를 선택해주세요.')
+		        			return false;
+		        		} else {
+		        			pageId = $('input[name="page"]:checked').val();
+							pageToken = $('input[name="'+pageId+'"]').val()
+							
+							//페이지 토큰 발급완료
+			        		console.log(pageToken);
+							
+							//사용자 페이지id 발급완료
+			        		console.log(pageId);
+							
+							//페이지의 instagram 계정 가져오기
+				        	$.ajax({
+				        		async: false,
+				        		type: 'get',
+				        		url: 'https://graph.facebook.com/v13.0/'+pageId+'?fields=instagram_business_account&access_token='+accessToken,
+				        		dataType: 'json',
+				        		success: function(data) {
+				        			console.log(data);
+				        			
+				        			//연결된 instagram 계정이 없을 경우
+				        			if(!data['instagram_business_account']) {
+				        				alert('해당 페이지에 연결된 인스타그램 비즈니스 계정이 없습니다.');
+				        				$('.insta').empty();
+				        				$('.idSelect').empty();
+				        				//$('.instaPost').empty();
+				        				instaId = '';
+				        				return false;
+				        			} else {
+				        				//instagram id 발급완료
+				        				instaId = data['instagram_business_account'].id;
+							        	console.log(instaId);
+							        	
+							        	$('.insta').html('인스타 id : ' + instaId);
+				        			}
+				        		}
+				        	})
+				        	
+				        	//instagram 사용자 정보 확인
+				        	//해당하는 instagram id가 있다면
+				        	if(instaId) {
+				        		$.ajax({
+					        		async: false,
+					        		type: 'get',
+					        		url: 'https://graph.facebook.com/v13.0/'+instaId+'?fields=username&access_token='+accessToken,
+					        		dataType: 'json',
+					        		success: function(data) {
+					        			console.log(data['username']);
+					        			var str = '';
+					        			
+					        			//instagram 계정을 확인하는 계정 id 출력
+						        		str += '<li><input type="radio" name="insta" value="'+data['username']+'">'+data['username']+'</li>'
+						        		str += '<input type="button" class="idCheck" value="정보 저장하기">'
+						        		
+						        		$('.idSelect').html(str);
+					        		}
+					        	})
+				        	} else {
+				        		return false;
+				        	}
+							
+							$('.idCheck').click(function() {
+								if(!$('input[name="insta"]:checked').val()) {
+				        			alert('연결할 인스타그램 계정을 선택해주세요.')
+				        			return false;
+				        		} else {
+				        			//이미 등록된 계정이 또 등록되면 안되므로 계정 중복 검사 실행
+				        			$.ajax({
+				        				async: false,
+					        			type: 'get',
+					        			url: '/insta/idCheck',
+					        			data: {
+					        				"businessId": instaId,
+					        			},
+					        			dataType: 'json',
+					        			success: function(data) {
+					        				//중복된 계정 id가 있다면 실행 불가
+					        				if(data >= 1) {
+					        					alert('이미 등록된 계정입니다. 다른 계정으로 저장해주세요.')
+					        					return false;
+					        				} else {
+					        					console.log(fbName);
+												console.log(accessToken);
+												console.log(pageToken);
+												console.log(pageId);
+												console.log(instaId);
+												
+												//사용자 정보 data db 입력
+												$.ajax({
+													async: false,
+								        			type: 'post',
+								        			url: '/insta/add',
+								        			data: {
+								        				"accessToken": accessToken,
+								        				"pageToken": pageToken,
+								        				"businessId": instaId,
+								        				"pageId": pageId,
+								        				"fbName": fbName
+								        			},
+								        			dataType: 'json',
+								        			success: function(data) {
+								        				if(data) {
+								        					alert('정보가 저장되었습니다.')
+								        				}
+								        			}
+						        				})
+						        			}
+					        			}
+									})
+				        		}
+							})
+		        		}
+					})
+		        	
+		            document.querySelector('#authBtn').value = "Logout";
+		            
+		            FB.api(
+		                '/me',
+		                'GET',
+		                {"fields":"id, name, email"},
+		                function(response) {
+		                    document.querySelector('#welcome').innerHTML = "Welcome " + response.name + ", id : " + response.id + ", email : " + response.email;
+		                    id = response.id;
+		                    console.log(id)
+		                }
+		            );
+		        } else {
+		            document.querySelector('#authBtn').value = "Login";
+		        }
+	  		})
+		};
+		
+		
+	</script>
+</body>
+</html>

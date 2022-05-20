@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script src="https://code.jquery.com/jquery-latest.min.js"></script>
+</head>
+<body>
+	<button id="channelBtn">채널 정보 수집</button></br>
+	<button id="videoBtn">비디오 정보 수집</button></br>
+	<button id="commentBtn">댓글 정보 수집</button>
+</body>
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		$("#channelBtn").click(function() {
+			$.ajax({
+				url: "/youtube/getChannels",
+				success: function(res) {
+					console.log(res)
+					if(res === true) {
+						alert("채널 정보 수집 성공")
+					} else {
+						alert("수집 실패")
+					}
+				}
+			})
+		})
+		
+		$("#videoBtn").click(function() {
+			$.ajax({
+				url: "/youtube/getVideos",
+				success: function(res) {
+					console.log(res)
+					if(res === true) {
+						alert("비디오 정보 수집 성공")
+					} else {
+						alert("수집 실패")
+					}
+				}
+			})
+		})
+		
+		$("#commentBtn").click(function() {
+			$.ajax({
+				url: "/youtube/getComments",
+				success: function(res) {
+					console.log(res)
+					if(res === true) {
+						alert("댓글 정보 수집 성공")
+					} else {
+						alert("수집 실패")
+					}
+				}
+			})
+		})
+	})
+</script>
+</html>

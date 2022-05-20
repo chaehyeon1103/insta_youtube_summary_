@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cogus.insta.youtube.mapper.YoutubeMapper">
+
+	<select id="getChannelData" resultType="com.cogus.insta.youtube.vo.LinkedChannelVO">
+		select * from youtube.linkedChannelInfo
+	</select>
+	
+	<insert id="insertChannel">
+		load data infile #{filePath}
+			into table gather_youtube.channel
+		    character set utf8mb4
+		    fields
+				terminated by ','
+				OPTIONALLY ENCLOSED BY '"' ESCAPED BY '"'
+			lines 
+				terminated by '\n'
+    		ignore 2 lines (id, title, description, publishedAt, thumbnails, country, uploads, viewCount, subscriberCount, hiddenSubscriberCount, videoCount)
+	</insert>
+	
+	<insert id="insertPlaylist">
+		load data infile #{filePath}
+			into table gather_youtube.playlistItem
+		    character set utf8mb4
+		    fields
+				terminated by ','
+				OPTIONALLY ENCLOSED BY '"' ESCAPED BY '"'
+			lines 
+				terminated by '\n'
+    		ignore 2 lines (id, publishedAt, channelId, title, description, thumbnails, channelTitle, playlistId, position, kind, videoId)
+	</insert>
+	
+	<insert id="insertVideo">
+		load data infile #{filePath}
+			into table gather_youtube.video
+		    character set utf8mb4
+		    fields
+				terminated by ','
+				OPTIONALLY ENCLOSED BY '"' ESCAPED BY '"'
+			lines 
+				terminated by '\n'
+    		ignore 2 lines (forSeq, id, tags, categoryId, liveBroadcastContent, defaultLanguage, defaultAudioLanguage, viewCount, likeCount, favoriteCount, commentCount)
+	</insert>
+	
+	<insert id="insertComment">
+		load data infile #{filePath}
+			into table gather_youtube.comment
+		    character set utf8mb4
+		    fields
+				terminated by ','
+			lines 
+				terminated by '\n'
+    		ignore 2 lines (id, videoId, kind, textOriginal, authorDisplayName, authorProfileImageUrl, authorChannelUrl, authorChannelId, canRate, viewerRating, likeCount, publishedAt, updatedAt, canReply, totalReplyCount, isPublic)
+	</insert>
+	
+	<select id="getPlaylistId" resultType="String">
+		select playlistId from youtube.linkedChannelInfo
+	</select>
+	
+	<update id="updateLinkedChannelInfo">
+		update youtube.linkedchannelinfo set playlistId = #{playlistId} where channelId = #{channelId}
+	</update>
+	
+	<!-- <select id="getSeq" resultType="int">
+		select seq from gather_youtube.playlistItem where datehh = #{datehh} and videoId = #{videoId}
+	</select> -->
+	
+	<select id="getPlaylist" resultType="com.cogus.insta.youtube.vo.PlaylistItemVO">
+		select * from gather_youtube.playlistItem where date = #{date}
+	</select>
+
+	<select id="getVideoIdList" resultType="String">
+		select id from gather_youtube.video where date = #{date}
+	</select>
+	
+	<insert id="insertLog" useGeneratedKeys="true" keyProperty="seq">
+		insert into youtube.gather_log(type) values(#{type})
+	</insert>
+	
+	<update id="updateLog">
+		update youtube.gather_log set status = #{status}, message = #{message} where seq = #{seq}
+	</update>
+	
+	<select id="getLog" resultType="com.cogus.insta.youtube.vo.LogVO">
+		select * from youtube.gather_log where seq = #{seq}
+	</select>
+
+	<update id="alterAutoIncrement" parameterType="java.lang.String">
+		alter table gather_youtube.${table} auto_increment = 1
+	</update>
+</mapper>

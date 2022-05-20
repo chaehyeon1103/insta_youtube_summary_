@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cogus.insta.mapper.InstaMapper">
+	
+	<insert id="insert">
+		insert into linkedAccountInfo(accessToken, pageToken, businessId, pageId, fbName) 
+			values(#{accessToken}, #{pageToken}, #{businessId}, #{pageId}, #{fbName})
+	</insert>
+	
+	<select id="idCheck" resultType="int">
+		select count(*) from linkedAccountInfo where businessId = #{businessId}
+	</select>
+	
+	<select id="getUserData" resultType="com.cogus.insta.vo.LinkedAccountVO">
+		select * from linkedAccountInfo
+	</select>
+	
+	<insert id="insertUser">
+		load data infile #{filePath}
+			into table gather_instagram.account
+		    character set utf8mb4
+		    fields
+				terminated by ','
+				OPTIONALLY ENCLOSED BY '"' ESCAPED BY '"'
+			lines 
+				terminated by '\n'
+    		ignore 2 lines (id, biography, followers_count, follows_count, media_count, name, profile_picture_url, username, website)
+	</insert>
+	
+	<insert id="insertMedia">
+		load data infile #{filePath}
+			into table gather_instagram.media
+		    character set utf8mb4
+		    fields
+				terminated by ','
+				OPTIONALLY ENCLOSED BY '"' ESCAPED BY '"'
+			lines 
+				terminated by '\n'
+    		ignore 2 lines (caption, comments_count, id, is_comment_enabled, like_count, media_product_type, media_type, media_url, owner, permalink, shortcode, thumbnail_url, timestamp, username)
+	</insert>
+	
+	<insert id="insertComment">
+		load data infile #{filePath}
+			into table gather_instagram.comment
+		    character set utf8mb4
+		    fields
+				terminated by ','
+				OPTIONALLY ENCLOSED BY '"' ESCAPED BY '"'
+			lines 
+				terminated by '\n'
+    		ignore 2 lines (mediaId, fromId, id, text, timestamp, username, isReplies, parent_id)
+	</insert>
+	
+	<insert id="insertLog" useGeneratedKeys="true" keyProperty="seq">
+		insert into gather_log(type) 
+			values(#{type})
+	</insert>
+	
+	<update id="updateLog">
+		update gather_log set status = #{status}, message = #{message} where seq = #{seq}
+	</update>
+	
+	<select id="getLog" resultType="com.cogus.insta.vo.LogVO">
+		select * from gather_log where seq = #{seq}
+	</select>
+</mapper>
