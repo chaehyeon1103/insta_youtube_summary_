@@ -80,7 +80,7 @@
 	</insert>
 	
 	<update id="updateLog">
-		update youtube.gather_log set status = #{status}, message = #{message} where seq = #{seq}
+		update youtube.gather_log set file = #{file}, status = #{status}, message = #{message} where seq = #{seq}
 	</update>
 	
 	<select id="getLog" resultType="com.cogus.insta.youtube.vo.LogVO">
@@ -90,4 +90,8 @@
 	<update id="alterAutoIncrement" parameterType="java.lang.String">
 		alter table gather_youtube.${table} auto_increment = 1
 	</update>
+
+	<select id="alreadySummary" resultType="int">
+		select count(*) from youtube.gather_log where date = #{date} and type = #{type} and status = 1
+	</select>
 </mapper>

@@ -22,7 +22,9 @@ public interface YoutubeMapper {
 	public List<String> getVideoIdList(String date);
 	
 	public int insertLog(LogVO log);
-	public boolean updateLog(int seq, int status, String message);
+	public boolean updateLog(int seq, String file, int status, String message);
 	public LogVO getLog(int seq);
-	//public  getLogStatus
+
+	//이미 수집 진행되었을 때
+	public int alreadySummary(String date, String type);
 }

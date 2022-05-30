@@ -83,12 +83,17 @@ public class YoutubeServiceImpl implements YoutubeService{
 	}
 
 	@Override
-	public boolean updateLog(int seq, int status, String message) {
-		return mapper.updateLog(seq, status, message);
+	public boolean updateLog(int seq, String file, int status, String message) {
+		return mapper.updateLog(seq, file, status, message);
 	}
 
 	@Override
 	public LogVO getLog(int seq) {
 		return mapper.getLog(seq);
+	}
+
+	@Override
+	public int alreadySummary(String date, String type) {
+		return mapper.alreadySummary(date, type);
 	}
 }
